@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+    <style>
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    color: #008080;
+    border-bottom: 2px solid #008080;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+p {
+    line-height: 1.6;
+}
+
+/* Style for diet prediction */
+.diet-prediction {
+    font-weight: bold;
+    color: #4CAF50; /* Green color */
+}
+
+/* Style for exercise prediction */
+.exercise-prediction {
+    font-weight: bold;
+    color: #2196F3; /* Blue color */
+}
+
+/* Responsive design */
+@media screen and (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+}
+
+
+
+    </style>
+</head>
+<body>
+    <h2>Diet Prediction:</h2>
+    <p>{{ diet_prediction }}</p>
+
+    <h2>Exercise Prediction:</h2>
+    <p>{{ Exercise_prediction }}</p>
+
+    
+
+    <!-- You can add more styling or information as needed -->
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health and Diet Prediction</title>
+    <style>
+        body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    color: #008080;
+}
+
+form {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+input[type="submit"] {
+    background-color: #008080;
+    color: #fff;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover {
+    background-color: #006666;
+}
+
+/* Responsive design */
+@media screen and (max-width: 600px) {
+    form {
+        padding: 15px;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <h1>Health and Diet Prediction</h1>
+    <form method="post" action="/predict">
+        <label for="age">Age:</label>
+        <input type="number" name="age" required><br>
+
+        <label for="gender">Gender:</label>
+        <input type="text" name="gender" required><br>
+
+        <label for="height">Height (cm):</label>
+        <input type="number" name="height" required><br>
+
+        <label for="weight">Weight (kg):</label>
+        <input type="number" name="weight" required><br>
+
+        <label for="health_diseases">Health Diseases:</label>
+        <input type="text" name="health_diseases" required><br>
+
+        <input type="submit" value="Predict">
+    </form>
+</body>
+</html>
