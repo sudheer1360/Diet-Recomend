@@ -1,48 +1,103 @@
+from flask import Flask, render_template, request
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score
-import pickle
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from pymongo import MongoClient
 
+app = Flask(__name__)
+
+cluster = MongoClient('mongodb://127.0.0.1:27017')
+db = cluster['diet']
+users = db['users']
+
+@app.route('/')
+def index():
+    return render_template('login.html')
+
+@app.route('/login', methods=['post', 'get'])
+def login():
+    email = request.form['email']
+    password = request.form['password']
+    res = users.find_one({"email": email})
+    if res and dict(res)['password'] == password:
+        return render_template('index.html')
+    else:
+        return render_template('login.html', status='User does not exist or wrong password')
+
+@app.route('/reg')
+def reg():
+    return render_template('signup.html')
+
+@app.route('/regis', methods=['post', 'get'])
+def register():
+    name = request.form['name']
+    email = request.form['email']
+    password = request.form['password']
+    k = {}
+    k['name'] = name
+    k['email'] = email
+    k['password'] = password
+    res = users.find_one({"email": email})
+    if res:
+        return render_template('signup.html', status="Email already exists")
+    else:
+        users.insert_one(k)
+        return render_template('signup.html', status="Registration successful")
 
 df = pd.read_csv("dataset.csv")
 
-print(df.columns)
-
 le = LabelEncoder()
-
-# Encode categorical columns (Gender and Health Diseases)
 df['Gender'] = le.fit_transform(df['Gender'])
-df['Health Diseases'] = df['Health Diseases'].apply(lambda x: ','.join(sorted(x.strip().split(', '))))
-df['Health Diseases'] = le.fit_transform(df['Health Diseases'])
+df['Health Diseases'] = df['Health Diseases'].apply(lambda x: le.fit_transform([x])[0] if x else x)
 
-print(df["Health Diseases"])
+X = df[['Age', 'Gender', 'Height(cm)', 'Weight(kg)', 'Sugar Level', 'Systolic_BP', 'Diastolic_BP', 'Health Diseases']]
+y_diet = df[['Diet']]
+y_exercise = df[['Exercise']]
 
-# Split the data into features (X) and target (y)
-X = df[['Age', 'Gender', 'Height(cm)', 'Weight(kg)', 'Health Diseases']]
-y = df[['Diet Preferences']]
+X_train, X_test, y_train_diet, y_test_diet = train_test_split(X, y_diet, test_size=0.2, random_state=42)
+X_train, X_test, y_train_exercise, y_test_exercise = train_test_split(X, y_exercise, test_size=0.2, random_state=42)
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+diet_model = RandomForestClassifier(n_estimators=100, random_state=42)
+diet_model.fit(X_train, y_train_diet.values.ravel())
 
-# Initialize and train the RandomForestClassifier
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
+exercise_model = RandomForestClassifier(n_estimators=100, random_state=42)
+exercise_model.fit(X_train, y_train_exercise.values.ravel())
 
-# Make predictions on the test set
-y_pred = rf_model.predict(X_test)
+def preprocess_input(input_data):
+    le = LabelEncoder()
+    input_data['Gender'] = le.fit_transform(input_data['Gender'])
+    input_data['Health Diseases'] = le.fit_transform(input_data['Health Diseases'])
 
-# Evaluate the model (you can use different metrics based on your use case)
-accuracy = accuracy_score(y_test, y_pred)
-print(f'Model Accuracy: {accuracy}')
+    return input_data
 
-# Save the trained model to a file (for later use)
-with open('health_recommendation_model.pkl', 'wb') as model_file:
-    pickle.dump(rf_model, model_file)
+@app.route('/predict', methods=['POST'])
+def predict():
+    if request.method == 'POST':
+        age = float(request.form['age'])
+        gender = int(request.form['gender'])
+        height = float(request.form['height'])
+        weight = float(request.form['weight'])
+        sugar_level = float(request.form['sugar_Level'])
+        systolic_bp = float(request.form['systolic_BP'])
+        diastolic_bp = float(request.form['diastolic_BP'])
+        health_diseases = request.form['health_diseases']
 
-# Save the label encoders (for preprocessing during inference)
-with open('label_encoders.pkl', 'wb') as le_file:
-    pickle.dump({'Gender': le}, le_file)
+        user_input = pd.DataFrame({
+            'Age': [age],
+            'Gender': [gender],
+            'Height(cm)': [height],
+            'Weight(kg)': [weight],
+            'Sugar Level': [sugar_level],
+            'Systolic_BP': [systolic_bp],
+            'Diastolic_BP': [diastolic_bp],
+            'Health Diseases': [health_diseases]
+        })
 
-# Now, you can use the saved model and label encoders for making predictions in another script or notebook.
+        processed_input = preprocess_input(user_input)
+        diet_prediction = diet_model.predict(processed_input)[0]
+        exercise_prediction = exercise_model.predict(processed_input)[0]
+        return render_template('result.html', diet_prediction=diet_prediction, exercise_prediction=exercise_prediction)
+
+if __name__ == '__main__':
+    app.run(port=5001, debug=True)
